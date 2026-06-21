@@ -98,7 +98,7 @@ async def run(args: argparse.Namespace) -> int:
         return 0
 
     slot = current_slot()
-    html = await build_digest_html(cfg, profile, top, slot)
+    html = build_digest_html(top, slot)
 
     subject = f"Job picks — {slot_label(slot)} ({len(top)} role{'s' if len(top) != 1 else ''})"
 

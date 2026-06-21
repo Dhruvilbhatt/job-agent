@@ -172,46 +172,109 @@ async def score_jobs(
     return scored
 
 
-async def build_digest_html(
-    cfg: Config,
-    profile: Profile,
-    scored: list[ScoredJob],
-    slot: str,
-) -> str:
-    client = AsyncAnthropic(api_key=cfg.anthropic_api_key)
-    instructions = _read_prompt("digest.txt")
+_SLOT_LABELS = {"morning": "8 AM", "evening": "5 PM"}
 
-    payload = {
-        "slot": slot,
-        "jobs": [
-            {
-                "company": s.job.company,
-                "title": s.job.title,
-                "location": s.job.location,
-                "remote": s.job.remote,
-                "url": s.job.url,
-                "source": s.job.source,
-                "posted": _recency_label(s.job.posted_at),
-                "days_old": _days_old(s.job.posted_at),
-                "score": s.score,
-                "fit_summary": s.fit_summary,
-                "match_reasons": s.match_reasons,
-                "concerns": s.concerns,
-            }
-            for s in scored
-        ],
-    }
 
-    resp = await client.messages.create(
-        model=cfg.model_digest,
-        max_tokens=8000,
-        system=[
-            {"type": "text", "text": instructions},
-            {"type": "text", "text": profile.as_prompt_block(), "cache_control": {"type": "ephemeral"}},
-        ],
-        messages=[{"role": "user", "content": json.dumps(payload, indent=2)}],
+def _esc(s) -> str:
+    """Minimal HTML escape — every untrusted string from job boards goes through this."""
+    if s is None:
+        return ""
+    return (
+        str(s)
+        .replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+        .replace('"', "&quot;")
     )
-    html = resp.content[0].text.strip()
-    html = re.sub(r"^```(?:html)?\s*", "", html)
-    html = re.sub(r"\s*```$", "", html)
-    return html
+
+
+def _render_card(s: ScoredJob) -> str:
+    j = s.job
+    days = _days_old(j.posted_at)
+    fresh_badge = (
+        '<span style="display:inline-block;background:#dcfce7;color:#15803d;'
+        'font-size:11px;font-weight:600;padding:2px 8px;border-radius:99px;'
+        'margin-left:8px;">Fresh</span>'
+        if days is not None and days <= 1
+        else ""
+    )
+    remote_badge = (
+        '<span style="display:inline-block;background:#eef2ff;color:#4338ca;'
+        'font-size:11px;font-weight:600;padding:2px 8px;border-radius:99px;'
+        'margin-left:6px;">Remote</span>'
+        if j.remote
+        else ""
+    )
+
+    reasons_html = ""
+    if s.match_reasons:
+        items = "".join(
+            f'<li style="margin:4px 0;color:#15803d;font-size:14px;line-height:1.5;">'
+            f'<span style="color:#15803d;font-weight:700;">&check;</span> {_esc(r)}</li>'
+            for r in s.match_reasons
+        )
+        reasons_html = (
+            f'<ul style="list-style:none;padding:0;margin:10px 0 0;">{items}</ul>'
+        )
+
+    concerns_html = ""
+    if s.concerns:
+        items = "".join(
+            f'<li style="margin:4px 0;color:#b45309;font-size:14px;line-height:1.5;">'
+            f'<span style="color:#b45309;font-weight:700;">&#9888;</span> {_esc(c)}</li>'
+            for c in s.concerns
+        )
+        concerns_html = (
+            f'<ul style="list-style:none;padding:0;margin:8px 0 0;">{items}</ul>'
+        )
+
+    url = _esc(j.url)
+    return f"""
+    <div style="background:#ffffff;border:1px solid #e5e5e7;border-radius:10px;padding:18px 20px;margin:0 0 16px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td style="vertical-align:top;">
+            <div style="font-size:12px;font-weight:600;color:#666;text-transform:uppercase;letter-spacing:0.4px;">{_esc(j.company)}</div>
+            <div style="margin:4px 0 0;font-size:17px;font-weight:700;line-height:1.3;">
+              <a href="{url}" style="color:#1d4ed8;text-decoration:none;">{_esc(j.title)}</a>
+            </div>
+          </td>
+          <td style="vertical-align:top;width:60px;text-align:right;">
+            <span style="display:inline-block;background:#1d4ed8;color:#ffffff;font-size:12px;font-weight:700;padding:5px 11px;border-radius:99px;white-space:nowrap;">{s.score}</span>
+          </td>
+        </tr>
+      </table>
+      <div style="margin-top:10px;font-size:12px;color:#555;">
+        {_esc(j.location or '—')} &middot; {_esc(j.source)} &middot; Posted {_esc(_recency_label(j.posted_at))}{fresh_badge}{remote_badge}
+      </div>
+      <p style="margin:12px 0 0;font-size:14px;line-height:1.55;color:#333;">{_esc(s.fit_summary)}</p>
+      {reasons_html}
+      {concerns_html}
+      <div style="margin-top:14px;">
+        <a href="{url}" style="display:inline-block;background:#1d4ed8;color:#ffffff;font-size:13px;font-weight:600;padding:8px 14px;border-radius:6px;text-decoration:none;">View posting &rarr;</a>
+      </div>
+    </div>"""
+
+
+def build_digest_html(scored: list[ScoredJob], slot: str) -> str:
+    """Render the digest email as static HTML. Pure Python — no LLM call,
+    no truncation risk, deterministic output."""
+    label = _SLOT_LABELS.get(slot, slot.title())
+    n = len(scored)
+    plural = "s" if n != 1 else ""
+    cards = "\n".join(_render_card(s) for s in scored)
+    return f"""<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>Job picks &mdash; {label}</title></head>
+<body style="margin:0;padding:0;background:#f7f7f8;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#1a1a1a;">
+  <div style="max-width:640px;margin:0 auto;padding:24px 16px;">
+    <h1 style="font-size:22px;margin:0 0 6px;font-weight:700;">Your {label} picks</h1>
+    <p style="color:#666;font-size:13px;margin:0 0 28px;">{n} role{plural} &middot; sorted by fit score &middot; agent-curated</p>
+    {cards}
+    <p style="color:#999;font-size:12px;text-align:center;margin:32px 0 0;line-height:1.5;">
+      Sent by your personal job-watcher agent &middot; {n} role{plural} this run<br>
+      Tune in <code>profile/preferences.yaml</code> or raise the score threshold to narrow the digest.
+    </p>
+  </div>
+</body>
+</html>"""
