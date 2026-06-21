@@ -1,0 +1,120 @@
+# Preferences tuned for Dishita Thaker: 2026 UC Irvine MBA, Strategy & Marketing
+# concentration, with pre-MBA business consulting (ZS Associates) and recent
+# product marketing / GTM experience at Mattel and SEGA.
+# Graduating June 2026 — targeting full-time, post-MBA roles.
+
+# Lead with marketing/brand/GTM; PM and strategy/consulting are strong secondaries
+# given her consulting background and Product Club leadership.
+target_functions:
+  - Product Marketing (PMM)
+  - Brand Marketing / Brand Manager
+  - Go-to-Market Strategy / GTM
+  - Marketing Strategy
+  - Growth Marketing
+  - Integrated Marketing / Campaign Management
+  - Marketing Analytics / Commercial Analytics
+  - Product Management (Senior PM / APM / PM MBA programs)
+  - Strategy & Operations / BizOps
+  - Corporate Strategy
+  - Senior Consultant / Strategy Consultant (post-MBA tracks)
+
+# Post-MBA full-time titles. Avoid IC engineering, internships, or anything
+# requiring 7+ years of post-MBA experience.
+seniority:
+  - Manager
+  - Senior Manager
+  - Brand Manager / Senior Brand Manager
+  - PMM / Senior PMM
+  - Marketing Manager / Senior Marketing Manager
+  - Product Manager / Senior Product Manager
+  - APM (post-MBA programs)
+  - Senior Associate / Senior Consultant
+  - Lead
+
+# Industries where her trajectory (CPG, gaming, pharma, tech) gives her
+# meaningful credibility.
+industries_preferred:
+  - Consumer / CPG
+  - Gaming & Entertainment
+  - Tech / Software / SaaS
+  - Fintech
+  - Healthcare / Pharma / Biotech
+  - AI / ML platforms
+  - Marketplaces
+  - Retail & DTC
+
+locations:
+  - United States (any major metro)
+  - Remote (US)
+  # Strong existing footprint in SoCal (Irvine, LA) and Bay Area — flag those slightly higher
+  - Greater Los Angeles
+  - Bay Area
+  - New York metro
+
+remote_ok: true
+
+# Hard requirement: drop postings that EXPLICITLY state no visa sponsorship.
+# Set to false if you're a US citizen / permanent resident and want a wider net.
+requires_sponsorship: true
+
+# Avoid these — they violate stated direction or are wrong fit/seniority.
+exclusions:
+  - Pure engineering / IC software / SWE roles
+  - Internships (she is graduating, targeting full-time)
+  - Roles requiring 7+ years of post-MBA experience
+  - Director / VP / Head-of roles
+  - Sales Development Rep / Account Executive entry-level sales
+  - Defense contractors
+  - Tobacco / gambling
+  - Roles requiring active security clearance
+
+# Differentiators — soft signals to boost score, not hard requirements.
+differentiators:
+  - STEM MBA + technical undergrad (ICT, computational science)
+  - Quantitative marketing background (Alteryx, SQL, Tableau, Python)
+  - Brand / product marketing experience at major IPs (Mattel UNO, SEGA)
+  - International consulting (UK / Canada / Italy markets)
+  - Forecasting & launch quantification
+
+# ────────────────────────────────────────────────────────────────────────
+# Aggregator search settings — used by JobSpy (LinkedIn/Indeed/Glassdoor/Google)
+# ────────────────────────────────────────────────────────────────────────
+
+# Search location passed to JobSpy. "United States" sweeps all US metros.
+search_location: "United States"
+
+# Only consider postings newer than this many hours. 72 = last 3 days (fresh signal).
+recency_hours: 72
+
+# How many results to request per query per site.
+results_per_query: 20
+
+# Search terms — tuned to her marketing-led focus with PM/strategy secondaries.
+# Each becomes one query × 4 sites (linkedin/indeed/glassdoor/google).
+search_queries:
+  # Product / Brand Marketing — primary
+  - "Product Marketing Manager"
+  - "Senior Product Marketing Manager"
+  - "Brand Manager"
+  - "Senior Brand Manager"
+  - "Associate Brand Manager"
+  # GTM & Marketing Strategy
+  - "Go-to-Market Manager"
+  - "Marketing Strategy Manager"
+  - "Integrated Marketing Manager"
+  # Growth
+  - "Growth Marketing Manager"
+  - "Growth Manager"
+  # Product Management — secondary
+  - "Product Manager MBA"
+  - "Associate Product Manager"
+  - "Senior Product Manager"
+  # Strategy & Ops — secondary
+  - "Strategy and Operations"
+  - "Chief of Staff"
+  - "Corporate Strategy Manager"
+  # Marketing Analytics — leverages her ZS/Alteryx/Tableau background
+  - "Marketing Analytics Manager"
+  - "Commercial Strategy Manager"
+  # Consulting (post-MBA tracks)
+  - "Senior Consultant"

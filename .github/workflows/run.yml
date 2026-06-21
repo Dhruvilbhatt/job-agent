@@ -1,0 +1,83 @@
+name: job-watcher
+
+on:
+  schedule:
+    # All times in UTC. Default below is PDT (UTC-7) for 08:00 and 17:00 local.
+    # Adjust if you're in a different timezone, or if you want PST (UTC-8) in winter.
+    - cron: "0 15 * * *"   # 08:00 PDT
+    - cron: "0 0 * * *"    # 17:00 PDT (= 00:00 UTC the next day)
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Skip sending email (digest written to artifact instead)"
+        required: false
+        default: "false"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: job-watcher
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install
+        run: pip install -e .
+
+      - name: Run agent
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          EMAIL_TO: ${{ secrets.EMAIL_TO }}
+          EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
+        run: |
+          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
+            python -m src.main --dry-run
+          else
+            python -m src.main
+          fi
+
+      - name: Upload dry-run digest (if present)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: digest-${{ github.run_id }}
+          path: data/last_digest.html
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Persist dedup DB
+        if: github.event_name == 'schedule' || github.event.inputs.dry_run != 'true'
+        run: |
+          if [ ! -f data/seen_jobs.db ]; then
+            echo "No DB to persist."; exit 0
+          fi
+          git config user.name "job-watcher-bot"
+          git config user.email "job-watcher-bot@users.noreply.github.com"
+          git add data/seen_jobs.db
+          if git diff --cached --quiet; then
+            echo "No DB changes to commit."
+          else
+            git commit -m "chore(data): update seen_jobs.db [skip ci]"
+            # Retry-push in case another scheduled run touched the branch in parallel.
+            for i in 1 2 3; do
+              git pull --rebase --autostash && git push && break
+              echo "push attempt $i failed; sleeping"
+              sleep $((i * 5))
+            done
+          fi

@@ -1,0 +1,127 @@
+{
+  "name": "Dishita A Thaker",
+  "headline": "2026 UC Irvine MBA | Dean's list scholar | Marketing | Product | Analytics & Commercialisation | Beta Gamma Sigma honouree",
+  "location": "Irvine, California, United States",
+  "email": "dathaker@uci.edu",
+  "summary": "Second-year STEM MBA at UC Irvine (Paul Merage), Strategy & Marketing concentration. Pre-MBA: business consulting at ZS Associates (pharma, international markets). Passionate about product marketing, brand marketing, GTM, marketing analytics. Recent experience at Mattel (UNO) and SEGA. CliftonStrengths: Strategic, Achiever, Arranger, Discipline, Learner.",
+  "top_skills": ["Project Management", "Computer Science", "Statistical Analysis"],
+  "positions": [
+    {
+      "company": "Stealth Startup",
+      "title": "Co-Founder",
+      "location": "Irvine, CA",
+      "start": "2026-03",
+      "end": "present",
+      "description": "Sustainability solution for construction industry, team of 5 MBA classmates. Owns product marketing and brand marketing."
+    },
+    {
+      "company": "University of California, Irvine - The Paul Merage School of Business",
+      "title": "Teaching Assistant",
+      "start": "2025-01",
+      "end": "2026-05",
+      "description": "TA at Paul Merage School of Business."
+    },
+    {
+      "company": "Sega of America, Inc.",
+      "title": "MBA Project Consultant — GTM and Marketing Strategy",
+      "location": "Irvine, CA",
+      "start": "2025-09",
+      "end": "2025-12",
+      "description": "Led GTM and growth strategy for gaming titles. Designed community-led initiatives across social media, influencers, experiential activations. Managed campaign planning, budget allocation, ROI analysis. Workstream lead: Social Media, Community Events, Strategic Alliances."
+    },
+    {
+      "company": "Mattel, Inc.",
+      "title": "MBA Marketing Intern — Global Brand Team, Games",
+      "location": "El Segundo, California, United States",
+      "start": "2025-06",
+      "end": "2025-08",
+      "description": "Drove GTM strategy for UNO Elite ($13M launch). Led Gen Z growth strategy for UNO. Built business cases for a $40M portfolio (pricing analysis, scenario modeling). Owned KPI tracking & post-launch analysis. Supported UNO Social Clubs experiential activations. Conducted whitespace opportunity analysis for digital gaming expansion of Monster High and Polly Pocket. Presented final recommendations to entire Games division including Global Head of Games."
+    },
+    {
+      "company": "ZS Associates",
+      "title": "Senior Associate, Business Consulting",
+      "location": "Pune, Maharashtra, India",
+      "start": "2024-01",
+      "end": "2024-06",
+      "description": "Led market & customer analysis for a ~$20M pharmaceutical brand across UK, Canada, Italy. Managed and mentored 4 analysts; improved efficiency 20–25%."
+    },
+    {
+      "company": "ZS Associates",
+      "title": "Decision Analytics Associate (Business Consulting)",
+      "location": "Pune, Maharashtra, India",
+      "start": "2022-07",
+      "end": "2023-12",
+      "description": "Be My Star award. International Markets team supporting BI&A for a top-5 worldwide pharma (Fortune 500). Clients across UK, Canada, Italy. Workstreams: Field Force Effectiveness, Incentive Compensation, brand management analytics, marketing campaigns, launch opportunity, GTM analytics, Key Driver analytics, Immuno-Oncology forecasting. Mentored 4+ associates."
+    },
+    {
+      "company": "ZS Associates",
+      "title": "Decision Analytics Associate Intern",
+      "location": "Pune, Maharashtra, India",
+      "start": "2022-01",
+      "end": "2022-07",
+      "description": "Pre-MBA internship."
+    },
+    {
+      "company": "MM Classes",
+      "title": "Consultant",
+      "location": "India",
+      "start": "2020-03",
+      "end": "2024-06",
+      "description": "Education / training consulting."
+    },
+    {
+      "company": "DA-IICT",
+      "title": "Research Intern",
+      "location": "Gandhinagar, Gujarat, India",
+      "start": "2022-01",
+      "end": "2022-12",
+      "description": "Parallelized arithmetic encoding algorithm. Best poster award, HiPC IEEE Data Analytics conference 2022."
+    }
+  ],
+  "education": [
+    {
+      "school": "University of California, Irvine — The Paul Merage School of Business",
+      "degree": "MBA, Strategy & Marketing (STEM-designated)",
+      "start": "2024-08",
+      "end": "2026-06",
+      "honors": ["Dean's list scholar (top 12%)", "Forté Fellow", "Paul Elizabeth merit scholarship", "Beta Gamma Sigma"],
+      "activities": ["VP Marketing, Product Club UCI", "TA", "Challenge 4 Charity volunteer"]
+    },
+    {
+      "school": "Dhirubhai Ambani Institute of Information and Communication Technology (DA-IICT)",
+      "degree": "BTech in ICT (Hons in Computational Science)",
+      "start": "2018",
+      "end": "2022",
+      "gpa": "4.3/5"
+    }
+  ],
+  "certifications": [
+    "Fundamentals of Finance",
+    "Marketing Analytics",
+    "Alteryx Designer Core Certified",
+    "Introduction to Marketing",
+    "Visharad Pratham in Kathak"
+  ],
+  "honors_awards": [
+    "Beta Gamma Sigma honouree",
+    "Dean's list scholar (top 12%)",
+    "Forté Fellow",
+    "Be My Star (ZS, top performer among 500+)",
+    "Best Poster — HiPC IEEE Data Analytics 2022",
+    "SEGA FM26 case competition winner (UCI)",
+    "Best Paper SRS"
+  ],
+  "skills": [
+    "Product Marketing", "Brand Marketing", "GTM Strategy", "Marketing Analytics",
+    "Pricing Analysis", "Scenario Modeling", "Customer Segmentation", "Forecasting",
+    "KPI Frameworks", "Strategic Partnerships", "Influencer Marketing", "Experiential Marketing",
+    "Alteryx", "SQL", "Tableau", "Python", "Advanced Excel"
+  ],
+  "languages": [
+    {"language": "English", "level": "Full Professional"},
+    {"language": "Hindi", "level": "Elementary"},
+    {"language": "Marathi", "level": "Elementary"},
+    {"language": "French", "level": "Elementary"},
+    {"language": "Gujarati", "level": "Elementary"}
+  ]
+}

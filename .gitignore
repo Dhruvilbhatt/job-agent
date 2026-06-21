@@ -1,0 +1,22 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+.DS_Store
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+
+# Local-only profile files — uncomment if you don't want resume/profile in the repo.
+# profile/resume.md
+# profile/linkedin.json
+
+# Keep data/seen_jobs.db tracked so dedup persists across GitHub Actions runs.
+# Other files in data/ are local-only.
+data/runs.log
+data/*.tmp
+data/last_digest.html
+
+# Stray empty SQLite file that some tools create — never commit.
+your_database.db

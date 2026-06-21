@@ -1,0 +1,80 @@
+# 50+ companies tuned to Dishita's profile: MBA marketing / brand / GTM with
+# secondary PM and strategy interest. Skewed toward Consumer / CPG / Gaming /
+# Entertainment / Tech / Fintech — sectors where her ZS → Mattel → SEGA arc
+# gives her credibility.
+#
+# These are a PRIORITY BONUS on top of the JobSpy aggregator (LinkedIn, Indeed,
+# Glassdoor, Google Jobs). The aggregator handles broad discovery; this list
+# surfaces ATS-direct roles that may not be on aggregators.
+#
+# Slug source: company careers URL.
+#   boards.greenhouse.io/<slug>   -> { ats: greenhouse, slug: <slug> }
+#   jobs.lever.co/<slug>          -> { ats: lever, slug: <slug> }
+#   jobs.ashbyhq.com/<slug>       -> { ats: ashby, slug: <slug> }
+# 404s are logged and skipped; safe to leave unsure entries while investigating.
+
+companies:
+  # ── Gaming & Entertainment (her recent direction) ──────────────────────
+  - { name: Roblox,           ats: greenhouse, slug: roblox }
+  - { name: Niantic,          ats: greenhouse, slug: niantic }
+  - { name: Discord,          ats: greenhouse, slug: discord }
+  - { name: Riot Games,       ats: greenhouse, slug: riotgames }
+  - { name: Epic Games,       ats: greenhouse, slug: epicgames }
+  - { name: Twitch,           ats: greenhouse, slug: twitch }
+  - { name: Spotify,          ats: greenhouse, slug: spotifyjobs }
+
+  # ── Consumer / CPG / DTC (Mattel/UNO adjacency) ────────────────────────
+  - { name: Warby Parker,     ats: greenhouse, slug: warbyparker }
+  - { name: Allbirds,         ats: greenhouse, slug: allbirds }
+  - { name: Glossier,         ats: greenhouse, slug: glossier }
+  - { name: Hims & Hers,      ats: greenhouse, slug: forhims }
+  - { name: Faire,            ats: greenhouse, slug: faire }
+  - { name: ClassPass,        ats: greenhouse, slug: classpass }
+  - { name: Bilt Rewards,     ats: greenhouse, slug: biltrewards }
+  - { name: Away,             ats: lever,      slug: awaytravel }
+
+  # ── High-growth tech / marketplace (Marketing/PM/Strategy roles) ───────
+  - { name: Airbnb,           ats: greenhouse, slug: airbnb }
+  - { name: DoorDash,         ats: greenhouse, slug: doordashusa }
+  - { name: Lyft,             ats: greenhouse, slug: lyft }
+  - { name: Pinterest,        ats: greenhouse, slug: pinterest }
+  - { name: Reddit,           ats: greenhouse, slug: reddit }
+  - { name: Notion,           ats: greenhouse, slug: notion }
+  - { name: Figma,            ats: greenhouse, slug: figma }
+  - { name: Asana,            ats: greenhouse, slug: asana }
+  - { name: Webflow,          ats: greenhouse, slug: webflow }
+  - { name: Glean,            ats: greenhouse, slug: gleanwork }
+  - { name: Substack,         ats: ashby,      slug: substack }
+
+  # ── Fintech (consulting + analytics applicability) ─────────────────────
+  - { name: Stripe,           ats: greenhouse, slug: stripe }
+  - { name: Plaid,            ats: greenhouse, slug: plaid }
+  - { name: Brex,             ats: greenhouse, slug: brex }
+  - { name: Ramp,             ats: greenhouse, slug: ramp }
+  - { name: Coinbase,         ats: greenhouse, slug: coinbase }
+  - { name: Robinhood,        ats: greenhouse, slug: robinhood }
+  - { name: Affirm,           ats: greenhouse, slug: affirm }
+  - { name: Klarna,           ats: greenhouse, slug: klarna }
+  - { name: SoFi,             ats: greenhouse, slug: sofi }
+  - { name: Carta,            ats: greenhouse, slug: carta }
+  - { name: Mercury,          ats: ashby,      slug: mercury }
+
+  # ── AI / Infra (high-growth, brand-building marketing roles) ───────────
+  - { name: Anthropic,        ats: greenhouse, slug: anthropic }
+  - { name: Scale AI,         ats: greenhouse, slug: scaleai }
+  - { name: Databricks,       ats: greenhouse, slug: databricks }
+  - { name: Sigma Computing,  ats: greenhouse, slug: sigmacomputing }
+  - { name: Perplexity,       ats: ashby,      slug: perplexity }
+  - { name: Linear,           ats: ashby,      slug: linear }
+  - { name: Vercel,           ats: ashby,      slug: vercel }
+  - { name: Hex,              ats: ashby,      slug: hex }
+  - { name: Census,           ats: ashby,      slug: census }
+  - { name: Modal,            ats: ashby,      slug: modal }
+  - { name: Replit,           ats: ashby,      slug: replit }
+
+  # ── Healthcare / Pharma-adjacent (ZS adjacency) ────────────────────────
+  - { name: Hinge Health,     ats: greenhouse, slug: hingehealth }
+
+  # ── Streaming / Media ──────────────────────────────────────────────────
+  - { name: Netflix,          ats: lever,      slug: netflix }
+  - { name: Eventbrite,       ats: lever,      slug: eventbrite }
