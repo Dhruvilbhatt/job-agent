@@ -13,6 +13,7 @@ from . import store
 from .config import Config
 from .email_sender import send_digest
 from .filters import drop_no_sponsorship, drop_stale
+from .gsheet import GSheetExporter
 from .profile import load_companies, load_profile
 from .scorer import build_digest_html, score_jobs
 from .sources import AshbySource, GreenhouseSource, JobSpySource, LeverSource
@@ -102,6 +103,7 @@ async def run(args: argparse.Namespace) -> int:
 
     subject = f"Job picks — {slot_label(slot)} ({len(top)} role{'s' if len(top) != 1 else ''})"
 
+    emailed_ids: set[str] = set()
     if args.dry_run:
         out_path = Path(__file__).resolve().parent.parent / "data" / "last_digest.html"
         out_path.write_text(html)
@@ -109,6 +111,11 @@ async def run(args: argparse.Namespace) -> int:
     else:
         send_digest(cfg, subject, html)
         store.mark_emailed([s.job.id for s in top], {s.job.id: s.score for s in top})
+        emailed_ids = {s.job.id for s in top}
+
+    # Push every scored job (not just emailed ones) to Google Sheets for tracking.
+    # No-op if env vars aren't configured.
+    GSheetExporter().export(scored, emailed_ids)
 
     log.info("dedup store: %s", store.stats())
     return 0

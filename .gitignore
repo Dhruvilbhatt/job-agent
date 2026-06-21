@@ -20,3 +20,7 @@ data/last_digest.html
 
 # Stray empty SQLite file that some tools create — never commit.
 your_database.db
+
+# Google Sheets service-account credentials. Never commit.
+gsheet-creds.json
+*-service-account.json

@@ -4,9 +4,11 @@ A daily job-watcher for an MBA candidate. It:
 
 1. Loads your resume + LinkedIn JSON + preferences as a static profile.
 2. Pulls fresh postings from **LinkedIn, Indeed, Glassdoor, and Google Jobs** (via [python-jobspy](https://github.com/Bunsly/JobSpy)), plus direct ATS feeds from a curated list of 50 MBA-target companies (Greenhouse / Lever / Ashby).
-3. Scores each posting against your profile using Claude (Haiku 4.5 for cheap pre-filter, Sonnet 4.6 for deep score). Prioritizes fresh postings.
-4. Emails you a digest of the top matches.
-5. Persists a SQLite dedup DB so you never see the same role twice.
+3. Drops postings that explicitly require no sponsorship (regex + LLM safety net) and anything older than the recency window.
+4. Scores each posting against your profile using Claude (Haiku 4.5 for cheap pre-filter, Sonnet 4.6 for deep score). Prioritizes fresh postings.
+5. Emails you a digest of the top matches (rendered from a deterministic Python template — no LLM truncation risk).
+6. Persists a SQLite dedup DB so you never see the same role twice.
+7. **Optionally** upserts every scored job into a Google Sheet for tracking (`status` and `notes` columns are yours to edit; never overwritten on re-runs).
 
 Designed to run on GitHub Actions cron 2×/day (08:00 and 17:00 PDT).
 
@@ -61,6 +63,8 @@ python -m src.main
    - `RESEND_API_KEY`
    - `EMAIL_TO`
    - `EMAIL_FROM` (e.g. `onboarding@resend.dev` until you verify a domain in Resend)
+   - `GOOGLE_SHEETS_SHEET_ID` *(optional — only if you want sheet export)*
+   - `GOOGLE_SHEETS_CREDS_JSON` *(optional — full contents of your service-account JSON)*
 3. Repo Settings → Actions → General → Workflow permissions → **Read and write permissions** (so the workflow can commit `seen_jobs.db` back).
 4. The workflow runs automatically at 08:00 and 17:00 PDT (cron in UTC). Adjust in [.github/workflows/run.yml](.github/workflows/run.yml).
 5. Trigger manually: Actions tab → "job-watcher" → "Run workflow" (option to dry-run).
@@ -79,22 +83,26 @@ profile + preferences + companies
         └───────┬────────┘
                 │
                 ▼
-         SQLite (dedup, INSERT OR IGNORE)
+  stale + sponsorship filters    ──▶ regex pre-filters, free
                 │
                 ▼
-    stage-1 filter (Haiku 4.5)   ──▶ drop obvious mismatches
+       SQLite dedup (INSERT OR IGNORE)
                 │
                 ▼
-    stage-2 scorer (Sonnet 4.6)  ──▶ 0–100 score + reasons + concerns
-                │                     recency-weighted
-                ▼
-    digest composer (Sonnet 4.6) ──▶ HTML email (recency surfaced)
+   stage-1 filter (Haiku 4.5)    ──▶ drop obvious mismatches
                 │
+                ▼
+   stage-2 scorer (Sonnet 4.6)   ──▶ 0–100 score + reasons + concerns
+                │                      recency-weighted
+                ├─────────────────────────────┐
+                ▼                             ▼
+   digest render (Python template)    Google Sheets upsert
+                │                     (preserves `status` + `notes`)
                 ▼
               Resend
 ```
 
-The candidate profile is passed as a **prompt-cached** system block, so per-job scoring stays cheap.
+The candidate profile is passed as a **prompt-cached** system block, so per-job scoring stays cheap. The digest is rendered from a deterministic Python template (no LLM call, no truncation risk).
 
 ## Cost
 
@@ -103,11 +111,52 @@ The candidate profile is passed as a **prompt-cached** system block, so per-job 
 ## Files of interest
 
 - [src/main.py](src/main.py) — orchestrator
-- [src/scorer.py](src/scorer.py) — Claude calls (filter + score + digest)
+- [src/scorer.py](src/scorer.py) — Claude scoring + Python digest template
 - [src/sources/jobspy_source.py](src/sources/jobspy_source.py) — LinkedIn/Indeed/Glassdoor/Google aggregator
 - [src/sources/greenhouse.py](src/sources/greenhouse.py), [lever.py](src/sources/lever.py), [ashby.py](src/sources/ashby.py) — ATS fetchers
+- [src/filters.py](src/filters.py) — sponsorship + recency pre-filters
+- [src/gsheet.py](src/gsheet.py) — Google Sheets exporter
+- [src/store.py](src/store.py) — SQLite dedup
 - [src/prompts/](src/prompts/) — Claude prompts (tune these without touching code)
 - [.github/workflows/run.yml](.github/workflows/run.yml) — cron + DB commit-back
+
+## Google Sheets export (optional but recommended)
+
+Upserts every scored job — not just emailed picks — into a single sheet so you have a searchable, editable history.
+
+**Columns** (in order):
+
+| Agent-owned (refreshed each run) | User-editable (preserved across runs) |
+|---|---|
+| `id`, `first_seen`, `last_seen`, `posted`, `emailed`, `company`, `title`, `location`, `remote`, `source`, `url`, `score`, `fit_summary`, `match_reasons`, `concerns` | `status`, `notes` |
+
+Suggested `status` lifecycle: `new` → `interested` → `applied` → `interviewing` → `offer` / `passed` / `rejected`.
+
+**Setup (one-time, ~10 min)**
+
+1. **GCP project + service account** — https://console.cloud.google.com → create project → enable **Google Sheets API** and **Google Drive API** → IAM → Service Accounts → create `job-agent-bot` → Keys → Add Key → JSON. Download the JSON.
+2. **Create the sheet** — https://sheets.new. Copy the **Sheet ID** from the URL (the chunk between `/d/` and `/edit`).
+3. **Share with the bot** — open the JSON, find `client_email`. In the sheet → Share → paste that email → Editor.
+4. **Wire up locally** — save the JSON as `gsheet-creds.json` in the repo root (it's gitignored). Add to `.env`:
+   ```
+   GOOGLE_SHEETS_SHEET_ID=<your-sheet-id>
+   GOOGLE_SHEETS_CREDS_JSON_PATH=./gsheet-creds.json
+   ```
+5. **GitHub Actions** — add two repo secrets: `GOOGLE_SHEETS_SHEET_ID` (the ID) and `GOOGLE_SHEETS_CREDS_JSON` (the entire JSON contents pasted in).
+
+**Behavior**
+
+- Runs at the end of every job-agent run, after the email send.
+- Failure is non-fatal — a Sheets API error logs a warning and the run continues. Email and dedup are not blocked.
+- If env vars aren't configured, the exporter no-ops silently.
+- On each run: existing rows have everything *except* `status` and `notes` refreshed; new rows are appended.
+- Tab name defaults to `jobs`. Override with `GOOGLE_SHEETS_TAB`.
+
+**Security**
+
+- The JSON private key gives write access to any sheet shared with the bot. Treat it like a password.
+- Rotate it (GCP → Service Account → Keys → Add new → delete old) if it ever leaves your machine.
+- `gsheet-creds.json` and `*-service-account.json` are gitignored by default.
 
 ## Tuning playbook
 
