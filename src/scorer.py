@@ -210,7 +210,7 @@ def _render_card(s: ScoredJob) -> str:
     if s.match_reasons:
         items = "".join(
             f'<li style="margin:4px 0;color:#15803d;font-size:14px;line-height:1.5;">'
-            f'<span style="color:#15803d;font-weight:700;">&check;</span> {_esc(r)}</li>'
+            f'<span style="color:#15803d;font-weight:700;">✓</span> {_esc(r)}</li>'
             for r in s.match_reasons
         )
         reasons_html = (
@@ -221,7 +221,7 @@ def _render_card(s: ScoredJob) -> str:
     if s.concerns:
         items = "".join(
             f'<li style="margin:4px 0;color:#b45309;font-size:14px;line-height:1.5;">'
-            f'<span style="color:#b45309;font-weight:700;">&#9888;</span> {_esc(c)}</li>'
+            f'<span style="color:#b45309;font-weight:700;">⚠</span> {_esc(c)}</li>'
             for c in s.concerns
         )
         concerns_html = (
@@ -245,13 +245,13 @@ def _render_card(s: ScoredJob) -> str:
         </tr>
       </table>
       <div style="margin-top:10px;font-size:12px;color:#555;">
-        {_esc(j.location or '—')} &middot; {_esc(j.source)} &middot; Posted {_esc(_recency_label(j.posted_at))}{fresh_badge}{remote_badge}
+        {_esc(j.location or '—')} · {_esc(j.source)} · Posted {_esc(_recency_label(j.posted_at))}{fresh_badge}{remote_badge}
       </div>
       <p style="margin:12px 0 0;font-size:14px;line-height:1.55;color:#333;">{_esc(s.fit_summary)}</p>
       {reasons_html}
       {concerns_html}
       <div style="margin-top:14px;">
-        <a href="{url}" style="display:inline-block;background:#1d4ed8;color:#ffffff;font-size:13px;font-weight:600;padding:8px 14px;border-radius:6px;text-decoration:none;">View posting &rarr;</a>
+        <a href="{url}" style="display:inline-block;background:#1d4ed8;color:#ffffff;font-size:13px;font-weight:600;padding:8px 14px;border-radius:6px;text-decoration:none;">View posting →</a>
       </div>
     </div>"""
 
@@ -265,14 +265,14 @@ def build_digest_html(scored: list[ScoredJob], slot: str) -> str:
     cards = "\n".join(_render_card(s) for s in scored)
     return f"""<!DOCTYPE html>
 <html>
-<head><meta charset="utf-8"><title>Job picks &mdash; {label}</title></head>
+<head><meta charset="utf-8"><title>Job picks — {label}</title></head>
 <body style="margin:0;padding:0;background:#f7f7f8;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#1a1a1a;">
   <div style="max-width:640px;margin:0 auto;padding:24px 16px;">
     <h1 style="font-size:22px;margin:0 0 6px;font-weight:700;">Your {label} picks</h1>
-    <p style="color:#666;font-size:13px;margin:0 0 28px;">{n} role{plural} &middot; sorted by fit score &middot; agent-curated</p>
+    <p style="color:#666;font-size:13px;margin:0 0 28px;">{n} role{plural} · sorted by fit score · agent-curated</p>
     {cards}
     <p style="color:#999;font-size:12px;text-align:center;margin:32px 0 0;line-height:1.5;">
-      Sent by your personal job-watcher agent &middot; {n} role{plural} this run<br>
+      Sent by your personal job-watcher agent · {n} role{plural} this run<br>
       Tune in <code>profile/preferences.yaml</code> or raise the score threshold to narrow the digest.
     </p>
   </div>
