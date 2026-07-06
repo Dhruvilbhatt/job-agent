@@ -96,8 +96,13 @@ async def _stage2(
     cfg: Config,
     profile_block: str,
     job: JobPosting,
+    *,
+    desc_chars: int = 3500,
 ) -> ScoredJob | None:
     instructions = _read_prompt("score.txt")
+    # Fit signals (function, seniority, sponsorship, comp) cluster in the first
+    # few KB of a JD; the tail is benefits/EEO boilerplate. Truncating here cuts
+    # Sonnet input tokens ~50% with negligible impact on scoring quality.
     user = (
         f"Title: {job.title}\n"
         f"Company: {job.company}\n"
@@ -106,7 +111,7 @@ async def _stage2(
         f"Posted: {_recency_label(job.posted_at)}\n"
         f"Source: {job.source}\n"
         f"URL: {job.url}\n\n"
-        f"Full description:\n{job.description}"
+        f"Description (truncated):\n{job.description[:desc_chars]}"
     )
     try:
         resp = await client.messages.create(
@@ -138,7 +143,20 @@ async def score_jobs(
     *,
     stage1_concurrency: int = 8,
     stage2_concurrency: int = 4,
+    rough_score_min: int = 5,
+    stage2_max: int = 40,
 ) -> list[ScoredJob]:
+    """Two-stage scoring funnel with a bounded expensive stage.
+
+    Stage 1 (cheap Haiku) filters every job and emits a rough 0-10 score.
+    Stage 2 (Sonnet) is the dominant cost, so we bound it: keep only Stage-1
+    survivors with rough_score >= ``rough_score_min``, sort by rough_score
+    (best first), and deep-score at most ``stage2_max`` of them. Because the
+    cap is applied *after* sorting — and sits well above the email's max-picks —
+    the strongest candidates are always scored; only marginal tail jobs are
+    deferred. This makes per-run Sonnet cost predictable regardless of how many
+    postings the boards return on a given day.
+    """
     client = AsyncAnthropic(api_key=cfg.anthropic_api_key)
     profile_block = profile.as_prompt_block()
 
@@ -149,8 +167,21 @@ async def score_jobs(
             return await _stage1(client, cfg, profile_block, j)
 
     s1_results = await asyncio.gather(*[s1(j) for j in jobs])
-    survivors = [job for job, passed, _ in s1_results if passed]
+    survivors = [(job, rough) for job, passed, rough in s1_results if passed]
     log.info("stage1: %d/%d jobs passed pre-filter", len(survivors), len(jobs))
+
+    # Gate on Stage-1 confidence, then rank and cap before the expensive stage.
+    gated = [(job, rough) for job, rough in survivors if rough >= rough_score_min]
+    gated.sort(key=lambda t: t[1], reverse=True)
+    to_score = [job for job, _ in gated[:stage2_max]]
+    log.info(
+        "stage2 gate: %d/%d survivors cleared rough>=%d; deep-scoring top %d with %s",
+        len(gated),
+        len(survivors),
+        rough_score_min,
+        len(to_score),
+        cfg.model_scorer,
+    )
 
     sem2 = asyncio.Semaphore(stage2_concurrency)
 
@@ -158,7 +189,7 @@ async def score_jobs(
         async with sem2:
             return await _stage2(client, cfg, profile_block, j)
 
-    s2_results = await asyncio.gather(*[s2(j) for j in survivors])
+    s2_results = await asyncio.gather(*[s2(j) for j in to_score])
     scored = [r for r in s2_results if r is not None]
     # Sort by score, break ties on freshness (newer first).
     scored.sort(

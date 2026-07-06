@@ -20,7 +20,7 @@ class JobSpySource(JobSource):
     """
 
     name = "jobspy"
-    SITES = ["linkedin", "indeed", "glassdoor", "google"]
+    DEFAULT_SITES = ["linkedin", "indeed", "google"]
 
     def __init__(
         self,
@@ -29,12 +29,17 @@ class JobSpySource(JobSource):
         hours_old: int = 168,
         results_per_query: int = 20,
         concurrency: int = 2,
+        sites: list[str] | None = None,
     ) -> None:
         self.queries = queries
         self.location = location
         self.hours_old = hours_old
         self.results_per_query = results_per_query
         self.concurrency = concurrency
+        # Sites are configurable so we can trim expensive/low-yield boards.
+        # Glassdoor is excluded by default: it's frequently rate-limited from CI
+        # IPs and largely duplicates Indeed/LinkedIn coverage.
+        self.SITES = sites or self.DEFAULT_SITES
 
     async def fetch(self, client: httpx.AsyncClient) -> list[JobPosting]:
         if not self.queries:

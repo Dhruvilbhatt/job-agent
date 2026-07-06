@@ -89,11 +89,17 @@ profile + preferences + companies
        SQLite dedup (INSERT OR IGNORE)
                 │
                 ▼
-   stage-1 filter (Haiku 4.5)    ──▶ drop obvious mismatches
+   title pre-filter (regex)      ──▶ drop clear exclusions, free
+                │
+                ▼
+   stage-1 filter (Haiku 4.5)    ──▶ drop obvious mismatches + rough 0–10
+                │
+                ▼
+   rank by rough score, cap top-N ──▶ bounds expensive stage (--stage2-max)
                 │
                 ▼
    stage-2 scorer (Sonnet 4.6)   ──▶ 0–100 score + reasons + concerns
-                │                      recency-weighted
+                │                      recency-weighted, truncated JD
                 ├─────────────────────────────┐
                 ▼                             ▼
    digest render (Python template)    Google Sheets upsert
@@ -106,7 +112,24 @@ The candidate profile is passed as a **prompt-cached** system block, so per-job 
 
 ## Cost
 
-≈ $0.30 per run, ~$18/month at 2 runs/day. Roughly half once cache hits stabilize.
+Cost is **bounded per run** by design. The funnel spends compute cheapest-first:
+
+1. **Free deterministic filters** (stale, sponsorship regex, title pre-filter) drop obvious noise before any LLM call.
+2. **Stage 1 (Haiku)** filters everything that survives and emits a rough 0–10 score — cheap.
+3. **Stage 2 (Sonnet)** — the dominant cost — runs only on the **top `--stage2-max` survivors** (default 40) that clear `--rough-min` (default 5), scored against a **truncated** description. This caps Sonnet spend regardless of how many postings the boards return on a busy day.
+
+With defaults (`stage2-max=40`, truncated JDs, prompt-cached profile), expect **≈ $0.20–0.50 per run**. The knobs:
+
+| Flag | Default | Effect |
+|---|---|---|
+| `--stage2-max N` | 40 | Hard cap on expensive Sonnet calls per run |
+| `--rough-min N` | 5 | Min Stage-1 score (0–10) to reach Sonnet |
+| `--max-picks N` | 20 | Max roles in the email |
+| `--threshold N` | 70 | Min final score to include |
+
+Because the cap is applied **after ranking by Stage-1 score**, the strongest matches are always deep-scored — only marginal tail jobs are deferred to the next run (they stay in the dedup DB, so nothing is lost). To also lower fetch volume: trim `search_queries`, `search_sites`, and `results_per_query` in [preferences.yaml](profile/preferences.yaml).
+
+> If you're on a tight budget and want Sonnet-level judgment only on finalists, set `MODEL_SCORER=claude-haiku-4-5-20251001` — Stage 2 then runs on Haiku too, cutting cost another ~5–10x with a modest quality tradeoff on borderline ranking.
 
 ## Files of interest
 

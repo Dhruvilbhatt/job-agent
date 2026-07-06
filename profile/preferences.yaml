@@ -83,38 +83,43 @@ differentiators:
 # Search location passed to JobSpy. "United States" sweeps all US metros.
 search_location: "United States"
 
+# Which aggregator boards to hit. Fewer boards = fewer near-duplicate postings
+# and lower downstream LLM cost. Glassdoor is omitted by default (frequently
+# rate-limited from CI IPs and largely duplicates Indeed/LinkedIn).
+search_sites:
+  - linkedin
+  - indeed
+  - google
+
 # Only consider postings newer than this many hours. 72 = last 3 days (fresh signal).
 recency_hours: 72
 
-# How many results to request per query per site.
-results_per_query: 20
+# How many results to request per query per site. Lower = cheaper; the funnel
+# only deep-scores the top matches anyway, so 15 is plenty for a 2x/day cadence.
+results_per_query: 15
 
 # Search terms — tuned to her marketing-led focus with PM/strategy secondaries.
-# Each becomes one query × 4 sites (linkedin/indeed/glassdoor/google).
+# Each becomes one query × N sites (see search_sites above).
+#
+# Kept intentionally lean: JobSpy broad-matches, so a query for
+# "Product Marketing Manager" already surfaces the "Senior"/"Associate" variants.
+# Deduping overlapping queries cuts fetch volume (and cost) with no loss of
+# relevant coverage. Add a term back only if the digest is missing a real niche.
 search_queries:
   # Product / Brand Marketing — primary
   - "Product Marketing Manager"
-  - "Senior Product Marketing Manager"
   - "Brand Manager"
-  - "Senior Brand Manager"
-  - "Associate Brand Manager"
   # GTM & Marketing Strategy
   - "Go-to-Market Manager"
   - "Marketing Strategy Manager"
-  - "Integrated Marketing Manager"
   # Growth
   - "Growth Marketing Manager"
-  - "Growth Manager"
   # Product Management — secondary
-  - "Product Manager MBA"
-  - "Associate Product Manager"
-  - "Senior Product Manager"
+  - "Product Manager"
   # Strategy & Ops — secondary
   - "Strategy and Operations"
   - "Chief of Staff"
-  - "Corporate Strategy Manager"
   # Marketing Analytics — leverages her ZS/Alteryx/Tableau background
   - "Marketing Analytics Manager"
-  - "Commercial Strategy Manager"
   # Consulting (post-MBA tracks)
   - "Senior Consultant"

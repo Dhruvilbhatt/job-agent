@@ -14,6 +14,7 @@ from .config import Config
 from .email_sender import send_digest
 from .filters import drop_no_sponsorship, drop_stale
 from .gsheet import GSheetExporter
+from .prefilter import drop_by_title
 from .profile import load_companies, load_profile
 from .scorer import build_digest_html, score_jobs
 from .sources import AshbySource, GreenhouseSource, JobSpySource, LeverSource
@@ -47,6 +48,7 @@ async def fetch_all(companies: list[dict], prefs: dict) -> list:
                 location=prefs.get("search_location", "United States"),
                 hours_old=int(prefs.get("recency_hours", 72)),
                 results_per_query=int(prefs.get("results_per_query", 20)),
+                sites=prefs.get("search_sites") or None,
             ),
             GreenhouseSource(companies),
             LeverSource(companies),
@@ -79,6 +81,12 @@ async def run(args: argparse.Namespace) -> int:
         all_jobs, dropped = drop_no_sponsorship(all_jobs)
         log.info("dropped %d postings that explicitly stated no sponsorship", dropped)
 
+    # Free, deterministic relevance gate: drop titles that clearly violate stated
+    # exclusions (IC engineering, Director/VP, internships, entry sales) before we
+    # spend any LLM tokens on them.
+    all_jobs, dropped_title = drop_by_title(all_jobs)
+    log.info("dropped %d postings by title pre-filter (clear exclusions)", dropped_title)
+
     if args.limit:
         all_jobs = all_jobs[: args.limit]
         log.info("--limit applied: trimmed to %d", len(all_jobs))
@@ -89,7 +97,13 @@ async def run(args: argparse.Namespace) -> int:
         log.info("nothing new to score; exiting")
         return 0
 
-    scored = await score_jobs(cfg, profile, new_jobs)
+    scored = await score_jobs(
+        cfg,
+        profile,
+        new_jobs,
+        rough_score_min=args.rough_min,
+        stage2_max=args.stage2_max,
+    )
 
     threshold = args.threshold
     top = [s for s in scored if s.score >= threshold][: args.max_picks]
@@ -128,6 +142,19 @@ def main() -> int:
     parser.add_argument("--limit", type=int, default=0, help="Process at most N postings (for dev).")
     parser.add_argument("--threshold", type=int, default=70, help="Minimum score to include in digest.")
     parser.add_argument("--max-picks", type=int, default=20, help="Maximum jobs per digest.")
+    parser.add_argument(
+        "--stage2-max",
+        type=int,
+        default=40,
+        help="Max jobs to deep-score with the (expensive) Sonnet stage per run. "
+        "Bounds per-run cost regardless of how many postings the boards return.",
+    )
+    parser.add_argument(
+        "--rough-min",
+        type=int,
+        default=5,
+        help="Minimum Stage-1 rough score (0-10) required to reach the Sonnet stage.",
+    )
     args = parser.parse_args()
     return asyncio.run(run(args))
 
