@@ -91,6 +91,12 @@ search_sites:
   - indeed
   - google
 
+# Drop postings that state a clear minimum experience ABOVE this many years.
+# She's a new-grad MBA, so roles demanding 5+ yrs are too senior. Precision-first:
+# only fires on an unambiguous "<N> years ... experience" gate; fuzzy seniority is
+# left to the LLM scorer. "4+ years" is kept; "5+ years" is dropped.
+max_experience_years: 4
+
 # Only consider postings newer than this many hours. 72 = last 3 days (fresh signal).
 recency_hours: 72
 

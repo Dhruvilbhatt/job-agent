@@ -67,6 +67,73 @@ _EXCLUSION_TITLE_PATTERNS: list[str] = [
 _EXCLUSION_RE = re.compile("|".join(_EXCLUSION_TITLE_PATTERNS), re.IGNORECASE)
 
 
+# ---------------------------------------------------------------------------
+# Free experience-requirement filter.
+#
+# Drops postings whose description states a *clear minimum* years-of-experience
+# above the candidate's ceiling (she's a new-grad MBA). Precision-first: we only
+# fire on an unambiguous "<N> years ... experience" gate. Fuzzy seniority is left
+# to the LLM (score.txt already penalizes it), so we never silently drop a role
+# on a shaky signal.
+#
+# Recall guards:
+#   * The number must sit right next to the word "experience" (so "4-year
+#     degree" or "over the past 10 years ..." don't match).
+#   * On a range ("5-7 years") we take the LOWER bound.
+#   * We take the MINIMUM across all mentions, so "8+ yrs in X OR 2+ yrs in Y"
+#     is kept (its true floor is 2).
+# ---------------------------------------------------------------------------
+
+# "<N>[+] [to/-/–] [<M>] year(s)/yr(s) ... experience"  (number precedes "experience")
+_EXP_FORWARD_RE = re.compile(
+    r"(\d{1,2})\s*(?:\+|plus)?\s*(?:[-–—]|to)?\s*(\d{1,2})?\s*\+?\s*"
+    r"(?:years?|yrs?)[^.\n]{0,40}?experien",
+    re.IGNORECASE,
+)
+# "experience of/with [at least] <N>[+] year(s)"  (explicit lead-in, avoids
+# matching narrative like "experience over the past 10 years")
+_EXP_REVERSE_RE = re.compile(
+    r"experien\w*\s*(?:of|:|with|,)?\s*(?:at\s+least\s+|a\s+minimum\s+of\s+|min(?:imum)?\s+of\s+)?"
+    r"(\d{1,2})\s*(?:\+|plus)?\s*(?:[-–—]|to)?\s*(\d{1,2})?\s*\+?\s*(?:years?|yrs?)",
+    re.IGNORECASE,
+)
+
+
+def min_required_experience(text: str) -> int | None:
+    """Return the lowest clearly-stated years-of-experience requirement in the
+    text, or None if none is found. Deterministic and free."""
+    if not text:
+        return None
+    floors: list[int] = []
+    for rx in (_EXP_FORWARD_RE, _EXP_REVERSE_RE):
+        for m in rx.finditer(text):
+            try:
+                floors.append(int(m.group(1)))  # lower bound of any range
+            except (TypeError, ValueError):
+                continue
+    return min(floors) if floors else None
+
+
+def drop_over_experienced(
+    jobs: list[JobPosting], max_years: int = 4
+) -> tuple[list[JobPosting], int]:
+    """Drop postings whose stated minimum experience exceeds ``max_years``.
+
+    Postings with no parseable experience requirement are KEPT (benefit of the
+    doubt — the LLM still judges seniority). Returns (kept_jobs, dropped_count).
+    """
+    kept: list[JobPosting] = []
+    dropped = 0
+    for j in jobs:
+        floor = min_required_experience(f"{j.title}\n{j.description}")
+        if floor is not None and floor > max_years:
+            log.debug("dropped (needs %d+ yrs exp): %s @ %s", floor, j.title, j.company)
+            dropped += 1
+        else:
+            kept.append(j)
+    return kept, dropped
+
+
 def title_exclusion_reason(title: str) -> str | None:
     """Return the offending phrase if the title clearly violates an exclusion,
     else None. Purely deterministic and free."""

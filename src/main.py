@@ -14,7 +14,7 @@ from .config import Config
 from .email_sender import send_digest
 from .filters import drop_no_sponsorship, drop_stale
 from .gsheet import GSheetExporter
-from .prefilter import drop_by_title
+from .prefilter import drop_by_title, drop_over_experienced
 from .profile import load_companies, load_profile
 from .scorer import build_digest_html, score_jobs
 from .sources import AshbySource, GreenhouseSource, JobSpySource, LeverSource
@@ -86,6 +86,12 @@ async def run(args: argparse.Namespace) -> int:
     # spend any LLM tokens on them.
     all_jobs, dropped_title = drop_by_title(all_jobs)
     log.info("dropped %d postings by title pre-filter (clear exclusions)", dropped_title)
+
+    # Drop roles that state a clear minimum experience above the candidate's
+    # ceiling (new-grad MBA). Precision-first; fuzzy cases fall through to the LLM.
+    max_exp = int(profile.preferences.get("max_experience_years", 4))
+    all_jobs, dropped_exp = drop_over_experienced(all_jobs, max_years=max_exp)
+    log.info("dropped %d postings requiring >%d yrs experience", dropped_exp, max_exp)
 
     if args.limit:
         all_jobs = all_jobs[: args.limit]
